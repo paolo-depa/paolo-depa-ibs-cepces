@@ -55,13 +55,14 @@ class Configuration(Base):
         'Certificate': SOAPAuth.MessageCertificateAuthentication,
     }
 
-    def __init__(self, endpoint, endpoint_type, cas, auth):
+    def __init__(self, endpoint, endpoint_type, cas, auth, openssl_seclevel):
         super().__init__()
 
         self._endpoint = endpoint
         self._endpoint_type = endpoint_type
         self._cas = cas
         self._auth = auth
+        self._openssl_seclevel = openssl_seclevel
 
     @property
     def endpoint(self):
@@ -82,6 +83,11 @@ class Configuration(Base):
     def auth(self):
         """Return the authentication method."""
         return self._auth
+
+    @property
+    def openssl_seclevel(self):
+        """Return the openssl security level."""
+        return self._openssl_seclevel
 
     @classmethod
     def load(cls, files=None, dirs=None, global_overrides=None,
@@ -109,6 +115,10 @@ class Configuration(Base):
         config['DEFAULT']['FQDN'] = fqdn.upper()
         config['DEFAULT']['shortname'] = shortname.lower()
         config['DEFAULT']['SHORTNAME'] = shortname.upper()
+
+        if not config.has_section('global'):
+            config.add_section('global')
+        config['global']['openssl_seclevel'] = ''
 
         if files is None:
             files = DEFAULT_CONFIG_FILES
@@ -149,7 +159,7 @@ class Configuration(Base):
         section = parser['global']
 
         # Ensure certain required variables are present.
-        for var in ['endpoint', 'auth', 'type']:
+        for var in ['endpoint', 'auth', 'type', 'openssl_seclevel']:
             if var not in section:
                 raise RuntimeError(
                     'Missing "{}/{}" variable in configuration.'.format(
@@ -171,8 +181,9 @@ class Configuration(Base):
         endpoint_type = section.get('type')
         authn = Configuration.AUTH_HANDLER_MAP[section['auth']](parser)
         cas = section.get('cas', True)
+        openssl_seclevel = section.get('openssl_seclevel')
 
         if cas == '':
             cas = False
 
-        return Configuration(endpoint, endpoint_type, cas, authn.handle())
+        return Configuration(endpoint, endpoint_type, cas, authn.handle(), openssl_seclevel)
