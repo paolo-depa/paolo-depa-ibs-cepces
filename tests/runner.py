@@ -9,6 +9,7 @@ if __name__ == "__main__":
     suite = unittest.TestSuite()
 
     suite.addTests(loader.loadTestsFromModule(cepces_test.certmonger))
+    suite.addTests(loader.loadTestsFromModule(cepces_test.http))
     suite.addTests(loader.loadTestsFromModule(cepces_test.xcep))
     suite.addTests(loader.loadTestsFromModule(cepces_test.xml))
 
